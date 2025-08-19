@@ -57,19 +57,29 @@ struct local_apic_non_maskable_interrupts {
   uint8_t lint_num; // 0 or 1
 };
 
+struct processor_local_x2APIC {
+  uint16_t reserved;
+  uint32_t processor_local_x2apic_id;
+  uint32_t flags;
+  uint32_t acpi_id;
+};
+
 int main()
 {
   std::vector<uint8_t> buffer;
-  std::string dump_filename{ "C:\\dev\\assembly\\dump\\madt.bin" };
+  std::string dump_filename{ "C:\\development\\assembly\\dump\\madt-0-256B_manual.bin" };
   std::deque<processor_local_apic> processor_local_apic_list;
   std::deque<io_apic> io_apic_list;
   std::deque<io_apic_interrupt_source_override> io_apic_interrupt_source_override_list;
   std::deque<local_apic_non_maskable_interrupts> local_apic_non_maskable_interrupts_list;
+  std::deque<processor_local_x2APIC> processor_local_x2APIC_list;
 
   if (FileIO::read(dump_filename, buffer)) {
     auto p_buffer{ buffer.data() };
     auto p_madt{ reinterpret_cast<madt_header*>(p_buffer) };
     int32_t remaining_bytes{ static_cast<int32_t>(p_madt->length) };
+    auto total_bytes{ remaining_bytes };
+
     remaining_bytes -= static_cast<int32_t>(sizeof(madt_header));
     auto p_cur{ p_buffer };
     p_cur += sizeof(madt_header);
@@ -78,7 +88,12 @@ int main()
       auto p_entry{ reinterpret_cast<apic_entry*>(p_cur) };
       p_cur += sizeof(apic_entry);
       remaining_bytes -= static_cast<int32_t>(p_entry->record_length);
+      auto offset{ total_bytes - remaining_bytes };
 
+      if (offset > 850) {
+        int a = 0;
+        a = 1;
+      }
       switch (p_entry->entry_type) {
       case 0:
       {
@@ -106,6 +121,13 @@ int main()
         auto& ent_type{ *reinterpret_cast<local_apic_non_maskable_interrupts*>(p_cur) };
         p_cur += sizeof(local_apic_non_maskable_interrupts);
         local_apic_non_maskable_interrupts_list.push_back(ent_type);
+      }
+      break;
+      case 9:
+      {
+        auto& ent_type{ *reinterpret_cast<processor_local_x2APIC*>(p_cur) };
+        p_cur += sizeof(processor_local_x2APIC);
+        processor_local_x2APIC_list.push_back(ent_type);
       }
       break;
       default:
