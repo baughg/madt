@@ -47,14 +47,29 @@ struct pci_config_header {
   uint32_t bist : 8;
 };
 
+
+
+union base_address {
+  uint32_t address;
+
+  struct base_address_bf {
+    uint32_t always_0 : 1;
+    uint32_t type : 2;
+    uint32_t prefetchable : 1;
+    uint32_t aligned_base_address : 28;
+  };
+
+  base_address_bf address_bf;
+};
+
 struct pci_config_0 {
   pci_config_header header;
-  uint32_t bar0;
-  uint32_t bar1;
-  uint32_t bar2;
-  uint32_t bar3;
-  uint32_t bar4;
-  uint32_t bar5;
+  base_address bar0;
+  base_address bar1;
+  base_address bar2;
+  base_address bar3;
+  base_address bar4;
+  base_address bar5;
   uint32_t cardbus_cis_pointer;
   uint32_t subsystem_vendor_id : 16;
   uint32_t subsystem_id : 16;
@@ -66,6 +81,11 @@ struct pci_config_0 {
   uint32_t interrupt_pin : 8;
   uint32_t min_grant : 8;
   uint32_t max_latency : 8;
+};
+
+struct pci_config_header_0 {
+  pci_config_0 config;
+  uint64_t bar[6] = {};
 };
 
 int main()
@@ -96,8 +116,8 @@ int main()
   }
   {
     std::vector<uint8_t> buffer;
-    std::string dump_filename{ "C:\\development\\assembly\\dump\\pcie_desc.bin" };
-    std::deque<pci_config_0> pci_config_0_list;
+    std::string dump_filename{ "C:\\development\\assembly\\dump\\npu_pci.bin" };
+    std::deque<pci_config_header_0> pci_config_0_list;
     
     if (FileIO::read(dump_filename, buffer)) {
       auto p_buffer{ buffer.data() };
@@ -108,7 +128,18 @@ int main()
       case 0:
       {
         auto& config{ *reinterpret_cast<pci_config_0*>(p_buffer) };
-        pci_config_0_list.push_back(config);
+        pci_config_header_0 config_ex{};
+        config_ex.config = config;
+
+        if (config.bar0.address_bf.type == 0x2) {
+          uint64_t bar0{ static_cast<uint64_t>(config.bar0.address & 0xfffffff0u) | (static_cast<uint64_t>(config.bar1.address & ~0u) << 32) };          
+          config_ex.bar[0] = bar0;
+        }
+        if (config.bar4.address_bf.type == 0x2) {
+          uint64_t bar4{ static_cast<uint64_t>(config.bar4.address & 0xfffffff0u) | (static_cast<uint64_t>(config.bar5.address & ~0u) << 32) };          
+          config_ex.bar[4] = bar4;
+        }
+        pci_config_0_list.push_back(config_ex);
         used_bytes += static_cast<uint32_t>(sizeof(pci_config_0));
       }
         break;

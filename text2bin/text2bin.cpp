@@ -13,9 +13,9 @@ std::vector<uint8_t> text2bin(const std::string& filename);
 
 int main()
 {
-  auto data{ text2bin("C:\\development\\assembly\\dump\\pcie_enum_offset.txt")};
+  auto data{ text2bin("C:\\development\\assembly\\dump\\npu_pci.txt")};
 
-  FileIO::write("C:\\development\\assembly\\dump\\pcie_enum_offset.bin", data.data(), data.size());
+  FileIO::write("C:\\development\\assembly\\dump\\npu_pci.bin", data.data(), data.size());
 }
 
 
