@@ -733,6 +733,8 @@ int main()
     data_stage_trb data_event_trb{ 0x0,0x0,0x00000100 , 0x00001E21 };
     data_event_trb.print_verbose();
   }
+  std::cout << "\n###################################################################\n\n\n";
+
   { // Read string descriptor
     setup_stage_trb setup_trb_ref{ 0x01000680, 0x00080000, 0x00000008, 0x00030841 };
     setup_stage_trb setup_trb{};
@@ -747,7 +749,7 @@ int main()
     setup_trb.bitfield.request_type.transfer_direction = 1;
     setup_trb.bitfield.trt = 3;
 
-    setup_trb.print();
+    setup_trb.print_verbose();
 
     data_stage_trb data_trb{ 0x0,0x0,0x8,0x00010C01 };
     data_trb.bitfield.C = 1;
@@ -756,15 +758,15 @@ int main()
     data_trb.bitfield.DIR = 1;
     data_trb.bitfield.CH = 0;
     data_trb.bitfield.trb_type = 3;
-    data_trb.print();
+    data_trb.print_verbose();
 
     status_stage_trb status_trb{ 0x0,0x0,0x0,0x00011013 };
     status_trb.bitfield.CH = 1;
     status_trb.bitfield.ENT = 1;
-    status_trb.print();
+    status_trb.print_verbose();
 
     data_stage_trb data_event_trb{ 0x0, 0x0, 0x0, 0x00001E21 };
-    data_event_trb.print();
+    data_event_trb.print_verbose();
   }
   tansfer_event_trb trans_trb{ 0x0,0x0,0x04000008, 0x01038001 };
 
