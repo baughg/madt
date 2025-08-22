@@ -215,7 +215,7 @@ union setup_stage_trb {
     std::cout << "  ; setup TRB\n";
     std::cout << "  ; ************ DWORD[0] ************\n";
     std::cout << "  ; bmRequestType(7:0)\n";
-    std::cout << "  ;  .recipient(4:0)=" << std::dec << static_cast<uint32_t>(bitfield.request_type.recipient) << " (";
+    std::cout << "  ;  .recipient(4:0)       =" << std::dec << static_cast<uint32_t>(bitfield.request_type.recipient) << " (";
     switch (bitfield.request_type.recipient) {
     case 0:
       description = "Device";
@@ -235,7 +235,7 @@ union setup_stage_trb {
     }
     std::cout << description << ")\n";
 
-    std::cout << "  ;  .type_of_request(6:5)=" << std::dec << static_cast<uint32_t>(bitfield.request_type.type_of_request) << " (";
+    std::cout << "  ;  .type_of_request(6:5) =" << std::dec << static_cast<uint32_t>(bitfield.request_type.type_of_request) << " (";
 
     switch (bitfield.request_type.type_of_request) {
     case 0:
@@ -320,16 +320,17 @@ union setup_stage_trb {
     std::cout << description << ")\n";
     uint16_t& val{ *reinterpret_cast<uint16_t*>(bitfield.wValue) };
     std::cout << "  ; wValue(31:16)=" << print_hex(static_cast<uint32_t>(val),4) << "\n";
-    std::cout << "  ;  [0](23:16)=" << print_hex(static_cast<uint32_t>(bitfield.wValue[0]),2) << "\n";
-    std::cout << "  ;  [1](31:24)=" << print_hex(static_cast<uint32_t>(bitfield.wValue[1]),2) << "\n";    
+    std::cout << "  ;  [0](23:16)  =" << print_hex(static_cast<uint32_t>(bitfield.wValue[0]),2) << "\n";
+    std::cout << "  ;  [1](31:24)  =" << print_hex(static_cast<uint32_t>(bitfield.wValue[1]),2) << "\n";    
     std::cout << "  mov eax, " << print_hex(words[0], 8) << "\n\n";
 
     std::cout << "  ; ************ DWORD[1] ************\n";
     uint16_t& index{ *reinterpret_cast<uint16_t*>(bitfield.wIndex) };
-    std::cout << "  ; wIndex(15:0)=" << print_hex(static_cast<uint32_t>(index), 4) << "\n";
-    std::cout << "  ;  [0](7:0)=" << print_hex(static_cast<uint32_t>(bitfield.wIndex[0]), 2) << "\n";
-    std::cout << "  ;  [1](15:8)=" << print_hex(static_cast<uint32_t>(bitfield.wIndex[1]), 2) << "\n";
-    std::cout << "  ; wLength(15:0)=" << print_hex(static_cast<uint32_t>(bitfield.wLength), 4) << "\n";
+    std::cout << "  ; wIndex(15:0) =" << print_hex(static_cast<uint32_t>(index), 4) << "\n";
+    std::cout << "  ;  [0](7:0)    =" << print_hex(static_cast<uint32_t>(bitfield.wIndex[0]), 2) << "\n";
+    std::cout << "  ;  [1](15:8)   =" << print_hex(static_cast<uint32_t>(bitfield.wIndex[1]), 2) << "\n";
+    std::cout << "  ; wLength(15:0)=" << print_hex(static_cast<uint32_t>(bitfield.wLength), 4) << " : " 
+      << std::dec << static_cast<uint32_t>(bitfield.wLength) << "d\n";
     std::cout << "  mov eax, " << print_hex(words[1], 8) << "\n\n";
 
     std::cout << "  ; ************ DWORD[2] ************\n";
@@ -343,14 +344,14 @@ union setup_stage_trb {
     std::cout << "  mov eax, " << print_hex(words[2], 8) << "\n\n";
 
     std::cout << "  ; ************ DWORD[3] ************\n";
-    std::cout << "  ; C(0)=" << std::dec << static_cast<uint32_t>(bitfield.C) << " (Cycle bit)\n";
+    std::cout << "  ; C(0)  =" << std::dec << static_cast<uint32_t>(bitfield.C) << " (Cycle bit)\n";
     std::cout << "  ; IOC(5)=" << std::dec << static_cast<uint32_t>(bitfield.IOC) << " (Interrupt On Completion)\n";
     std::cout << "  ; IDT(6)=" << std::dec << static_cast<uint32_t>(bitfield.IDT) << " (Immediate Data)\n";
     auto trb_type{ static_cast<uint32_t>(bitfield.trb_type) };
     std::cout << "  ; trb_type(15:10)=" << std::dec << trb_type << " (";
     std::cout << TRB_type_name(trb_type) << ")\n";
 
-    std::cout << "  ; trt(17:16)=" << std::dec << trb_type << " Transfer Type (";
+    std::cout << "  ; trt(17:16)     =" << std::dec << trb_type << " Transfer Type (";
 
     switch (trb_type) {
     case 0:
@@ -480,6 +481,40 @@ union data_stage_trb {
     }
   }
 
+  void print_verbose() {
+    std::cout << "  ; data TRB\n";
+    std::cout << "  ; ************ DWORD[0] ************\n";
+    std::cout << "  ; data_buffer_lo(31:0)=" << print_hex(bitfield.data_buffer_lo, 8) << "\n";
+    std::cout << "  ; ************ DWORD[1] ************\n";
+    std::cout << "  ; data_buffer_hi(31:0)=" << print_hex(bitfield.data_buffer_hi, 8) << "\n";
+
+    std::cout << "  ; ************ DWORD[2] ************\n";
+
+    {
+      auto transfer_len{ static_cast<uint32_t>(bitfield.trb_transfer_length) };
+      auto interrupter_target{ static_cast<uint32_t>(bitfield.interrupter_target) };
+      auto td_size{ static_cast<uint32_t>(bitfield.td_size) };
+
+      std::cout << "  ; trb_transfer_length(16:0)=" << print_hex(transfer_len, 5) << std::dec << " : " << transfer_len << "d\n";
+      std::cout << "  ; td_size(21:17)           =" << print_hex(td_size, 5) << std::dec << " : " << td_size << "d\n";
+      std::cout << "  ; interrupter_target(31:22)=" << print_hex(interrupter_target, 3) << std::dec << " : " << interrupter_target << "d\n";
+    }
+    std::cout << "  mov eax, " << print_hex(words[2], 8) << "\n\n";
+
+    std::cout << "  ; ************ DWORD[3] ************\n";
+    std::cout << "  ; C(0)  =" << std::dec << static_cast<uint32_t>(bitfield.C) << " (Cycle bit)\n";
+    std::cout << "  ; ENT(1)=" << std::dec << static_cast<uint32_t>(bitfield.ENT) << " (Evaluate Next TRB)\n";
+    std::cout << "  ; ISP(2)=" << std::dec << static_cast<uint32_t>(bitfield.ISP) << " (Interrupt-on Short Packet)\n";
+    std::cout << "  ; NS(3) =" << std::dec << static_cast<uint32_t>(bitfield.NS) << " (No Snoop)\n";
+    std::cout << "  ; CH(4) =" << std::dec << static_cast<uint32_t>(bitfield.CH) << " (Chain bit)\n";
+    std::cout << "  ; IOC(5)=" << std::dec << static_cast<uint32_t>(bitfield.IOC) << " (Interrupt On Completion)\n";
+    std::cout << "  ; IDT(6)=" << std::dec << static_cast<uint32_t>(bitfield.IOC) << " (Immediate Data)\n";
+    auto trb_type{static_cast<uint32_t>(bitfield.trb_type)};
+    std::cout << "  ; trb_type(15:10)=" << std::dec << trb_type << " (";
+    std::cout << TRB_type_name(trb_type) << ")\n";
+    std::cout << "  ; DIR(16)=" << std::dec << static_cast<uint32_t>(bitfield.IOC) << " (Direction; 1 -> 'IN (Read Data)')\n";
+    std::cout << "  mov eax, " << print_hex(words[3], 8) << "\n\n";
+  }
 
   struct data_stage_trb_bf {
     uint32_t data_buffer_lo;
@@ -594,6 +629,32 @@ union status_stage_trb {
     }
   }
 
+  void print_verbose() {
+    std::cout << "  ; status TRB\n";
+
+    for (uint32_t i{}; i < 2; ++i) {
+      std::cout << "  ; ************ DWORD[" << i << "] ************\n";
+      std::cout << "  mov eax, " << print_hex(words[i], 8) << "\n\n";
+    }
+
+    std::cout << "  ; ************ DWORD[2] ************\n";
+    auto interrupter_target{ static_cast<uint32_t>(bitfield.interrupter_target) };
+
+    std::cout << "  ; interrupter_target(31:22)=" << print_hex(interrupter_target, 3) << std::dec << " : " << interrupter_target << "d\n";
+    std::cout << "  mov eax, " << print_hex(words[2], 8) << "\n\n";
+    
+    std::cout << "  ; ************ DWORD[3] ************\n";
+    std::cout << "  ; C(0)  =" << std::dec << static_cast<uint32_t>(bitfield.C) << " (Cycle bit)\n";
+    std::cout << "  ; ENT(1)=" << std::dec << static_cast<uint32_t>(bitfield.ENT) << " (Evaluate Next TRB)\n";    
+    std::cout << "  ; CH(4) =" << std::dec << static_cast<uint32_t>(bitfield.CH) << " (Chain bit)\n";
+    std::cout << "  ; IOC(5)=" << std::dec << static_cast<uint32_t>(bitfield.IOC) << " (Interrupt On Completion)\n";    
+    auto trb_type{ static_cast<uint32_t>(bitfield.trb_type) };
+    std::cout << "  ; trb_type(15:10)=" << std::dec << trb_type << " (";
+    std::cout << TRB_type_name(trb_type) << ")\n";
+    std::cout << "  ; DIR(16)=" << std::dec << static_cast<uint32_t>(bitfield.IOC) << " (Direction; 1 -> 'IN (Read Data)')\n";
+    std::cout << "  mov eax, " << print_hex(words[3], 8) << "\n\n";
+  }
+
   struct status_stage_trb_bf {
     uint32_t RsvdZ_0;
     uint32_t RsvdZ_1;
@@ -662,6 +723,15 @@ int main()
   { // working descriptor read
     setup_stage_trb setup_trb{ 0x01000680 ,0x01000000 ,0x00000008 ,0x00030841 };
     setup_trb.print_verbose();
+
+    data_stage_trb data_trb{ 0x0,0x0,0x00000100 , 0x00010C01 };
+    data_trb.print_verbose();
+
+    status_stage_trb status_trb{ 0x0, 0x0, 0x0, 0x00001013 };
+    status_trb.print_verbose();
+
+    data_stage_trb data_event_trb{ 0x0,0x0,0x00000100 , 0x00001E21 };
+    data_event_trb.print_verbose();
   }
   { // Read string descriptor
     setup_stage_trb setup_trb_ref{ 0x01000680, 0x00080000, 0x00000008, 0x00030841 };
